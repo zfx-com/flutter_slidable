@@ -1,7 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_slidable/src/auto_close_behavior.dart';
-import 'package:flutter_slidable/src/notifications_old.dart';
 
 import 'action_pane_configuration.dart';
 import 'controller.dart';
@@ -18,7 +17,7 @@ class Slidable extends StatefulWidget {
   /// The [enabled], [closeOnScroll], [direction], [dragStartBehavior],
   /// [useTextDirection] and [child] arguments must not be null.
   const Slidable({
-    Key? key,
+    required this.child,
     this.groupTag,
     this.enabled = true,
     this.closeOnScroll = true,
@@ -27,7 +26,9 @@ class Slidable extends StatefulWidget {
     this.direction = Axis.horizontal,
     this.dragStartBehavior = DragStartBehavior.down,
     this.useTextDirection = true,
-    required this.child,
+    this.backgroundColor,
+    this.borderRadius,
+    Key? key,
   }) : super(key: key);
 
   /// Whether this slidable is interactive.
@@ -36,6 +37,14 @@ class Slidable extends StatefulWidget {
   ///
   /// Defaults to true.
   final bool enabled;
+
+  /// Defaults to [Colors.Transparent].
+  /// {@endtemplate}
+  final Color? backgroundColor;
+
+  /// Defaults to [BorderRadius.zero].
+  /// {@endtemplate}
+  final BorderRadius? borderRadius;
 
   /// Specifies to close this [Slidable] after the closest [Scrollable]'s
   /// position changed.
@@ -237,20 +246,26 @@ class _SlidableState extends State<Slidable>
       ),
     );
 
-    content = Stack(
-      children: <Widget>[
-        if (actionPane != null)
-          Positioned.fill(
-            child: ClipRect(
-              clipper: _SlidableClipper(
-                axis: widget.direction,
-                controller: controller,
+    content = ClipRRect(
+      borderRadius: widget.borderRadius ?? BorderRadius.zero,
+      child: Container(
+        color: widget.backgroundColor,
+        child: Stack(
+          children: <Widget>[
+            if (actionPane != null)
+              Positioned.fill(
+                child: ClipRect(
+                  clipper: _SlidableClipper(
+                    axis: widget.direction,
+                    controller: controller,
+                  ),
+                  child: actionPane,
+                ),
               ),
-              child: actionPane,
-            ),
-          ),
-        content,
-      ],
+            content,
+          ],
+        ),
+      ),
     );
 
     return SlidableGestureDetector(
@@ -258,8 +273,8 @@ class _SlidableState extends State<Slidable>
       controller: controller,
       direction: widget.direction,
       dragStartBehavior: widget.dragStartBehavior,
-      child: SlidableNotificationSender(
-        tag: widget.groupTag,
+      child: SlidableAutoCloseNotificationSender(
+        groupTag: widget.groupTag,
         controller: controller,
         child: SlidableScrollingBehavior(
           controller: controller,
